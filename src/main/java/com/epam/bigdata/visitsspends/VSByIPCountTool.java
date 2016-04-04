@@ -43,11 +43,6 @@ public class VSByIPCountTool extends Configured implements Tool {
         conf.set("mapreduce.map.output.compress", "true");
         conf.set("mapreduce.map.output.compress.codec", "org.apache.hadoop.io.compress.SnappyCodec");
 
-        if (args.length > 1 && args[1].endsWith(".bin")){
-            SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
-            SequenceFileOutputFormat.setCompressOutput(job, true);
-        }
-
         job.setJarByClass(VSByIPCountTool.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(VSWritable.class);
@@ -57,7 +52,14 @@ public class VSByIPCountTool extends Configured implements Tool {
         job.setReducerClass(VSReducer.class);
 
         job.setInputFormatClass(TextInputFormat.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+
+        if (args.length > 1 && args[1].endsWith(".bin")) {
+            SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.BLOCK);
+            SequenceFileOutputFormat.setCompressOutput(job, true);
+            conf.set("mapreduce.output.fileoutputformat.compress.codec", "org.apache.hadoop.io.compress.SnappyCodec");
+        } else {
+            job.setOutputFormatClass(TextOutputFormat.class);
+        }
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1] + "_" + System.currentTimeMillis()));
